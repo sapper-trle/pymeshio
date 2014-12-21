@@ -215,7 +215,7 @@ class ExportMqo(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     def execute(self, context):
         from . import export_mqo
         bl.initialize('mqo_export', context.scene)
-        export_mqo._execute(**self.as_keywords(
+        export_mqo._execute(self, **self.as_keywords(
             ignore=('check_existing', 'filter_glob', 'use_selection')))
         bl.finalize()
         return {'FINISHED'}

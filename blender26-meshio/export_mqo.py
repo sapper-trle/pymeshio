@@ -163,27 +163,37 @@ class MqoExporter(object):
         self.materials.append(material)
         return index
 
-    def write(self, path):
+    def write(self, op, path):
+        msg = ".mqo export: Opening %s" % path
+        op.report({'INFO'}, msg)
         bl.message("open: "+path)
         io=bl.Writer(path, 'cp932')
         self.__write_header(io)
-        self.__write_scene(io)
-        print("Writing MaterialChunk")
+        self.__write_scene(op, io)
+        msg = ".mqo export: Writing MaterialChunk"
+        print(msg)
+        op.report({'INFO'}, msg)
         self.__write_materials(io, os.path.dirname(path))
-        print("Writing ObjectChunk")
+        msg = ".mqo export: Writing ObjectChunk"
+        print(msg)
+        op.report({'INFO'}, msg)
         for info in self.objects:
             self.__write_object(io, info)
         io.write("Eof\r\n")
         io.flush()
         io.close()
+        msg = ".mqo export: Created %s" % path
+        op.report({'INFO'}, msg)
 
     def __write_header(self, io):
         io.write("Metasequoia Document\r\n")
         io.write("Format Text Ver 1.0\r\n")
         io.write("\r\n")
 
-    def __write_scene(self, io):
-        print("Writing SceneChunk")
+    def __write_scene(self, op, io):
+        msg = ".mqo export: Writing SceneChunk"
+        print(msg)
+        op.report({'INFO'}, msg)
         io.write("Scene {\r\n")
         io.write("}\r\n")
 
@@ -290,11 +300,15 @@ class MqoExporter(object):
         io.write("\t}\r\n") # end of faces
 
 
-def _execute(filepath='', scale=10, apply_modifier=False):
+def _execute(op, filepath='', scale=10, apply_modifier=False):
     if bl.object.getActive():
+        msg = ".mqo export: Scale = %.3f , Apply Modifier = %s" % (scale, apply_modifier)
+        op.report({'INFO'}, msg)
         exporter=MqoExporter(scale, apply_modifier)
         exporter.setup(bl.scene.get())
-        exporter.write(filepath)
+        exporter.write(op, filepath)
     else:
-        bl.message('no active object !')
+        msg = '.mqo export: No active object !'
+        bl.message(msg)
+        op.report({'ERROR'}, msg)
 
