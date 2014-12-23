@@ -106,11 +106,12 @@ class OutlineNode(object):
 
 
 class ObjectInfo(object):
-    __slots__=['object', 'depth', 'material_map']
-    def __init__(self, o, depth):
+    __slots__=['object', 'depth', 'material_map', 'visible']
+    def __init__(self, o, depth, visible):
         self.object=o
         self.depth=depth
         self.material_map={}
+        self.visible = visible
 
     def __str__(self):
         return "<ObjectInfo %d %s>" % (self.depth, self.object)
@@ -144,8 +145,8 @@ class MqoExporter(object):
         else:
             self.__setup(root)
 
-    def __setup(self, node, depth=0):
-        info=ObjectInfo(node.o, depth)
+    def __setup(self, node, depth=0, visible=15):
+        info=ObjectInfo(node.o, depth, visible)
         self.objects.append(info)
         if node.o.type.upper()=='MESH':
             # set material index
@@ -178,7 +179,7 @@ class MqoExporter(object):
         print(msg)
         op.report({'INFO'}, msg)
         for info in self.objects:
-            self.__write_object(io, info)
+            self.__write_object(op, io, info)
         io.write("Eof\r\n")
         io.flush()
         io.close()
@@ -213,21 +214,24 @@ class MqoExporter(object):
         # end of chunk
         io.write("}\r\n") 
 
-    def __write_object(self, io, info):
+    def __write_object(self, op, io, info):
         print(info)
-
+        msg = ".mqo export: %s" % info
+        op.report({'INFO'}, msg)
         obj=info.object
         if obj.type.upper()=='MESH' or obj.type.upper()=='EMPTY':
             pass
         else:
             print(obj.type)
+            msg = ".mqo export: %s is not a MESH object" % obj.type
+            op.report({'ERROR'}, msg)
             return
 
         io.write("Object \""+obj.name+"\" {\r\n")
 
         # depth
         io.write("\tdepth %d\r\n" % info.depth)
-        io.write("\tvisible %d\r\n" % 15)
+        io.write("\tvisible %d\r\n" % info.visible)
         # mirror
         if not self.apply_modifier:
             if bl.modifier.hasType(obj, 'MIRROR'):
